@@ -1,64 +1,79 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Rubik's cube rotation
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 9.24.0 and PHP 8.1.8
 
-## About Laravel
+## Algorithm
+- A cube is represented in 3D coordinate system, x, y, z
+- The cube is divided in blocks (26 of them), each having its own set of coordinates
+- The cube used is 3x3, therefore it's center is in (0,0,0) and all the coordinates of the blocks are some combination of -1, 0 and 1
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Rotation formula
+- Each rotation is performed around one axis (x, y or z), therefore the dimension in the rotation axis is not changing during a rotation.
+  This allows us to look at the rotation of blocks as two-dimensional in a plane perpendicular to the axis of rotation.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Euclidean geometry rules are being used, specifically the rotation of radius vector:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+x' = x*cosA - y*sinA
 
-## Learning Laravel
+y' = x*sinA + y*cosA
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Where x' and y' are the new coordinates and A is the angle of rotation. Since we're always rotating by 90 degrees and sin90 = 1, cos90 = 0
+the formula (for counterclockwise rotation) becomes:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+x' = -y
 
-## Laravel Sponsors
+y' = x
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+Or, in the case of clockwise rotation (sin-90 = -1):
 
-### Premium Partners
+x' = y
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+y' = -x
 
-## Contributing
+So, per example, if we're rotating a point (1,1,0) around Z axis:
+- Z remains unchanged
+- X becomes -1
+- Y becomes 1
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+So the new coordinates for this block are (-1, 1, 0)
 
-## Code of Conduct
+The block is represented by an object which, beside coordinates, keeps the information about the colors (Cx, Cy, Cz) representing the color of the blocks side perpendicular to the axis.
+When a block is rotated, the colors of sides parallel to the axis of rotation switch places (if Z is the axis, Cx becomes Cy and vice-versa).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Endpoints
+There are three endpoints:
 
-## Security Vulnerabilities
+**cube/recreate** 
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- GET, no parameters - resets the cube. 
+- Returns json with cube parameters.
 
-## License
+**cube/rotate/{axis}/{row}/{direction}** 
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- GET, rotates the cube 
+- {axis} can take values of x, y or z
+- {row} can be 1, 2 or 3, representing which row are we rotating (e.g. bottom, middle or top)
+- {direction} is the direction of the rotation, can be 'cw' (clockwise) or 'ccw' (counter-clockwise)
+- returns json with cube parameters (an array of blocks).
+
+**cube/display** 
+- GET, no params. 
+- This should show the cube in more readable format. _There might be some bugs or just vagueness with displaying the rotation around x and y axes, due to changing of the viewing perspective._ 
+
+**cube/display/side/{side}** 
+- GET, displays a side of the cube, part of the functionality above.
+- The side can be F, B, U, D, L, R (front, back, up, down, left, right)
+
+
+## Installation
+- clone the repository
+- go in the repo's directory, copy .env.example to .env and add your database parameters
+- type the commands:
+    - composer install
+    - php artisan migrate
+    - php artisan key:generate
+    - php artisan serve
+
+
+
+
