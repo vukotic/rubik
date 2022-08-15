@@ -55,6 +55,9 @@ There are three endpoints:
 - {row} can be 1, 2 or 3, representing which row are we rotating (e.g. bottom, middle or top)
 - {direction} is the direction of the rotation, can be 'cw' (clockwise) or 'ccw' (counter-clockwise)
 - returns json with cube parameters (an array of blocks).
+- e.g. curl --request GET \
+  --url http://127.0.0.1:8000/api/cube/rotate/z/3/ccw
+- the curl above would rotate around the Z axis, third (top) row of the cube counterclockwise
 
 **cube/display** 
 - GET, no params. 
